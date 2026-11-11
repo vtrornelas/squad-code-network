@@ -1093,6 +1093,24 @@ select option,select optgroup{background-color:#0b1215;color:#e3eaed}
 .fe-send{width:28px;height:28px;flex-shrink:0;border-radius:50%;border:0;background:var(--im-blue);display:grid;place-items:center;cursor:pointer;transition:transform .15s,background .2s}
 .fe-send:disabled{background:#3a3a3c;cursor:default}
 .fe-send:not(:disabled):active{transform:scale(.88)}
+.fe-tool{width:28px;height:28px;flex-shrink:0;border-radius:50%;border:0;background:none;color:#8e8e93;display:grid;place-items:center;cursor:pointer;transition:color .15s,background .2s}
+.fe-tool svg{width:17px;height:17px}
+.fe-tool:hover,.fe-tool:focus-visible{color:var(--im-text);background:#ffffff12}
+.fe-mic.on{color:#fff;background:#d6453d;animation:fe-mic-pulse 1.4s ease-in-out infinite}
+@keyframes fe-mic-pulse{0%,100%{box-shadow:0 0 0 0 #d6453d66}50%{box-shadow:0 0 0 6px #d6453d00}}
+@media (prefers-reduced-motion:reduce){.fe-mic.on{animation:none}}
+.fe-pill:has(.fe-tool){padding-left:4px}
+.fe-attach{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.fe-attach[hidden]{display:none}
+.fe-files{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px}
+.fe-file{display:inline-flex;align-items:center;gap:6px;max-width:100%;border:1px solid #3a3a3c;border-radius:10px;padding:4px 6px 4px 8px;background:#ffffff0d;font-size:11.5px;color:var(--im-text)}
+.fe-bubble.user .fe-file{border-color:#ffffff40;background:#ffffff1f;color:inherit}
+.fe-file svg{width:14px;height:14px;flex-shrink:0;opacity:.8}
+.fe-file-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px}
+.fe-file small{color:#8e8e93;font-size:10.5px;white-space:nowrap}
+.fe-file button{border:0;background:none;color:#8e8e93;width:18px;height:18px;display:grid;place-items:center;border-radius:50%;cursor:pointer;padding:0}
+.fe-file button:hover{color:var(--im-text);background:#ffffff1a}
+.fe-file button svg{width:11px;height:11px;opacity:1}
 .fe-send svg{width:15px;height:15px;fill:none;stroke:#fff;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
 /* The agent writing into a field block: badge in the header + content revealed line by line. */
 .fe-agent-badge{font:600 8px var(--mono);letter-spacing:1px;color:#fff;background:#0a84ff;border-radius:8px;padding:2px 7px;animation:fe-blink 1s infinite}

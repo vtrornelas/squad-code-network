@@ -12,6 +12,14 @@ planeja cada sprint, você aprova o plano e os agentes executam as features de v
 
 Tudo roda na sua máquina: um app de página única servido por um bridge local em Node.js, que guarda os dados num banco SQLite local.
 
+> **Este é um fork** de [felipeAguiarCode/squad-code-network](https://github.com/felipeAguiarCode/squad-code-network) com melhorias nas conversas com os agentes:
+>
+> - **Anexar arquivos**: o clipe ao lado da caixa de mensagem (ou arrastar e soltar no chat) anexa arquivos de texto (`.md`, `.txt`, `.csv`, `.json`, código), até 200 mil caracteres cada e 300 mil por conversa. O conteúdo fica no contexto da conversa, inclusive depois de recarregar a página.
+> - **Ditado por voz**: o microfone transcreve a fala em português na caixa de mensagem, para você revisar antes de enviar. Usa o reconhecimento de voz do Chrome ou do Edge, que processa o áudio nos servidores do Google ou da Microsoft.
+> - **Ler a pasta da operação (opcional)**: em Configurações > Claude Code, **Conversas podem ler a pasta da operação** libera só leitura (Read, Glob e Grep) nas conversas, para dizer "tem um arquivo na pasta". Vem desligada.
+>
+> Para trazer as novidades do projeto original: `git fetch upstream` e `git merge upstream/main`.
+
 ---
 
 ## 📑 Sumário
@@ -389,6 +397,7 @@ squad-code-network/
 | Mapa 3D não aparece ou fica lento | O navegador está sem WebGL. Ative a aceleração por hardware; sem WebGL o app usa a projeção 2D. |
 | Agentes, squads ou operações sumiram | Abra pelo bridge (`npm start`): os dados ficam em `data/squad.db`. Se o rodapé mostrar `SALVO SÓ NO NAVEGADOR`, recarregue a página com o bridge ativo. Versões anteriores ficam em Configurações > Workspace > **Versões salvas**. Pelo `index.html` (demo) os dados ficam só no navegador. |
 | `npm warn allow-scripts better-sqlite3 ... (install: node-gyp rebuild)` no `npm install` | Pode ignorar: o `better-sqlite3` já traz binários prontos para Windows, macOS e Linux, e o script de compilação bloqueado não é necessário. Não precisa aprovar. |
+| `npm install` falha com `gyp ERR! find VS` / `Could not find any Visual Studio installation` (Windows) | O npm tentou compilar o `better-sqlite3`, que já traz o binário pronto. Rode `npm install --ignore-scripts` (no PowerShell, `npm.cmd install --ignore-scripts` se scripts estiverem bloqueados). |
 | `Dependência ausente (better-sqlite3)` ao iniciar | Rode `npm install` na pasta do projeto. Se o erro for ao carregar o módulo (por exemplo, depois de trocar a versão do Node ou copiar a pasta de outra máquina), apague `node_modules` e rode `npm install` de novo. |
 
 ---

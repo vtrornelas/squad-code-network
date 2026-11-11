@@ -147,11 +147,21 @@ report (framed as "[Subagent hand-back] ... The report follows:" with indented l
   talk is `runAgentChat` (bridge, no tools). Conversations are kept in `ui.featureChats`/`ui.agentChats`/`ui.docChats` (filled at boot
   from `#squad-memory.chats`): `chatStash` (the Stop functions) stores `chatSnapshot(c)` there, and with the bridge `chatPersist`
   (hooked in `chatPush`/`chatSettle`/`chatFooter`, 800 ms) and `chatFlush` (beacon on `pagehide`) save it to the database.
-  Every chat turn runs with `CHAT_RUN` over `runOptionsFor` (`tools:[]`, `permissionMode:'dontAsk'`, `partial:true`); never
+  Every chat turn runs with `chatRun(withProject)` over `runOptionsFor`: `CHAT_RUN` (`tools:[]`, `permissionMode:'dontAsk'`, `partial:true`),
+  or, when the runtime's opt-in `chatRead` is on and the chat has a project, the same with `Read`/`Glob`/`Grep` as tools and
+  allowedTools plus `chatReadNote` in the system prompt (read-only, inside the operation folder); never
   `plan` (its planning flow made replies slow and the model wrote fake tool calls). `claude -p` never offers AskUserQuestion, so
   an agent asks with `"ask":{question,options}` in the reply's ```json block (`COWRITE_SYSTEM`/`AGENT_CHAT_SYSTEM`): `chatAsk`
   turns it into `id:'ask'` buttons (`agentChatChoose` sends the pick back as the person's message; typing also answers).
   `chatStream` grows one live bubble from the text deltas (hidden from ```json on) and `chatSettle` fills it at the end.
+  Chat extras (this fork): the compose bar of the three chats (`feToolsHTML`) has a clip (`fe-attach` → hidden `#feAttachInput`,
+  drop on `.fe-compose`/`#feMsgs` too) and a mic (`fe-mic`). `attachFiles` reads text files in the browser into `c.pending`
+  (chips in `#feAttach`, `ATTACH_MAX` 200k chars each, `ATTACH_TOTAL` 300k per chat); sending moves them to `c.files` (`attachTake`;
+  the user message keeps only `files:[{name,chars}]`, shown by `attachChipsHTML`) and an empty text becomes `attachDefaultText`.
+  `withFiles(c, prompt)` puts every file of `c.files` before each turn's prompt; `c.files` goes in `chatSnapshot` and back in the
+  chat constructors, so it survives reloads. Dictation (`micToggle`/`micStop`/`micState`, global `speech`) uses the browser's
+  `SpeechRecognition` in pt-BR, continuous with interim results, appending to what was typed; `closeModal` and sending stop it.
+  Tests: `python tests/chat_extras_test.py` (real bridge + `tests/fake-claude.mjs`, a stand-in SpeechRecognition).
   Both chat headers show the effective model (`coWriterModel`) and an effort chip (`effortChipHTML`: 5-bar meter; the model's
   default, dashed, when no level is set; none for Haiku), following the same override rules as `runOptionsFor`/`agentEffort`.
 - **Agent Teams** is how the first data of an operation is co-written: an online meetup, Teams style, in a full-screen modal
