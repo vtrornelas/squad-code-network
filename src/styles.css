@@ -1111,6 +1111,35 @@ select option,select optgroup{background-color:#0b1215;color:#e3eaed}
 .fe-file button{border:0;background:none;color:#8e8e93;width:18px;height:18px;display:grid;place-items:center;border-radius:50%;cursor:pointer;padding:0}
 .fe-file button:hover{color:var(--im-text);background:#ffffff1a}
 .fe-file button svg{width:11px;height:11px;opacity:1}
+.sp-card{margin:6px 0 2px;max-width:min(100%,460px);border:1px solid #3a3a3c;border-radius:14px;background:#1c1c1e;padding:10px 12px;color:var(--im-text);font-size:12.5px}
+.sp-card.done{border-color:#30d15855}
+.sp-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.sp-tag{font:600 9px var(--mono);letter-spacing:1.2px;text-transform:uppercase;color:var(--im-blue)}
+.sp-head strong{font-size:14px}
+.sp-head em{margin-left:auto;font-style:normal;color:#8e8e93;font-size:11px}
+.sp-goal{margin:6px 0 8px;color:#d1d1d6;line-height:1.45}
+.sp-list{margin:0;padding:0;list-style:none;display:grid;gap:4px;counter-reset:sp}
+.sp-list>li{counter-increment:sp;border-radius:9px;background:#ffffff08}
+.sp-list>li>details>summary{display:flex;align-items:center;gap:8px;padding:7px 9px;cursor:pointer;list-style:none}
+.sp-list>li>details>summary::-webkit-details-marker{display:none}
+.sp-list>li>details>summary::before{content:counter(sp);flex-shrink:0;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;background:#ffffff14;font:600 10px var(--mono);color:#aeaeb2}
+.sp-title{flex:1;min-width:0;font-weight:600;line-height:1.3}
+.sp-badges{display:flex;gap:4px;flex-shrink:0}
+.sp-badges em{font-style:normal;font-size:10px;color:#aeaeb2;border:1px solid #3a3a3c;border-radius:6px;padding:1px 5px;white-space:nowrap}
+.sp-body{padding:2px 10px 9px 35px;font-size:12px;color:#d1d1d6}
+.sp-card .sp-body :is(h1,h2,h3,h4,h5,h6){font-size:10.5px;font-weight:600;margin:9px 0 3px;color:#aeaeb2;text-transform:uppercase;letter-spacing:.6px}
+.sp-card .sp-body :is(p,ul,ol){margin:0 0 4px}
+.sp-card .sp-body li{background:none}
+.sp-deps{margin:6px 0 0;color:#8e8e93;font-size:11px}
+.sp-actions{display:flex;gap:8px;margin-top:10px}
+.sp-actions button{flex:1;border-radius:10px;padding:8px 10px;font:600 12.5px var(--sans);cursor:pointer;border:1px solid transparent}
+.sp-go{background:var(--im-blue);color:#fff}
+.sp-go:hover{filter:brightness(1.1)}
+.sp-only{background:none;border-color:#3a3a3c!important;color:var(--im-text)}
+.sp-only:hover{background:#ffffff0f}
+.sp-hint{display:block;margin-top:7px;color:#8e8e93;font-size:11px}
+.sp-done{display:flex;align-items:center;gap:6px;margin-top:9px;color:#30d158;font-size:12px}
+.sp-done svg{width:15px;height:15px;flex-shrink:0}
 .fe-send svg{width:15px;height:15px;fill:none;stroke:#fff;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
 /* The agent writing into a field block: badge in the header + content revealed line by line. */
 .fe-agent-badge{font:600 8px var(--mono);letter-spacing:1px;color:#fff;background:#0a84ff;border-radius:8px;padding:2px 7px;animation:fe-blink 1s infinite}

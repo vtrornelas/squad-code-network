@@ -18,6 +18,8 @@ Tudo roda na sua máquina: um app de página única servido por um bridge local 
 > - **Ditado por voz**: o microfone transcreve a fala em português na caixa de mensagem, para você revisar antes de enviar. Usa o reconhecimento de voz do Chrome ou do Edge, que processa o áudio nos servidores do Google ou da Microsoft.
 > - **Ler a pasta da operação (opcional)**: em Configurações > Claude Code, **Conversas podem ler a pasta da operação** libera só leitura (Read, Glob e Grep) nas conversas, para dizer "tem um arquivo na pasta". Vem desligada.
 >
+> - **Sprints pela conversa**: no Agent Teams ou na conversa com o comandante (ou o PO), quando vocês decidem a próxima sprint, a proposta chega como um cartão com as features (contexto, entregáveis, critérios de aceitação, riscos e tarefas). **Criar e iniciar** cria a sprint e as features na operação e entrega ao comandante, que monta o plano para você aprovar; **Só criar** só registra. Para ajustar, é só escrever o que mudar: a proposta volta atualizada.
+>
 > Para trazer as novidades do projeto original: `git fetch upstream` e `git merge upstream/main`.
 
 ---

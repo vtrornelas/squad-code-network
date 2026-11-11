@@ -162,6 +162,17 @@ report (framed as "[Subagent hand-back] ... The report follows:" with indented l
   chat constructors, so it survives reloads. Dictation (`micToggle`/`micStop`/`micState`, global `speech`) uses the browser's
   `SpeechRecognition` in pt-BR, continuous with interim results, appending to what was typed; `closeModal` and sending stop it.
   Tests: `python tests/chat_extras_test.py` (real bridge + `tests/fake-claude.mjs`, a stand-in SpeechRecognition).
+  Sprint proposals (this fork): the commander/PRD of the agent chat (`sprintFamily`) and every host of a doc chat get
+  `SPRINT_SYSTEM` (`sprintNote`), so they end a reply with a ```json `"sprint":{name, goal, features:[{title, context, deliverables,
+  criteria, risks, tasks, scope, priority, dependsOn}]}` instead of a plan to copy. `sprintProposal` normalizes it (context,
+  deliverables and risks go into the feature description as `###` sections; lists become `- ` lines; ≤ `SPRINT_MAX_FEATURES`) into
+  `m.proposal` (agent chat: `runAgentChat`; doc chats: `applyDocWrite` → `meta.proposal` → `chatApply`), drawn by `sprintCardHTML`
+  under the bubble. Only the newest proposal of a chat keeps the buttons (`sprint-accept`): `sprintAccept` creates the sprint
+  (`createSprint`) and its features (`createFeature`, setup + `dependsOn` by key or by title, dropped on a cycle), marks
+  `m.proposalDone={sprintId, started}` and, with "Criar e iniciar", closes the chat (the meetup saves unsaved documents first through
+  `saveProjectDoc`) and calls `startRun({sprintId})`, so the commander plans it and the plan card still waits for approval.
+  `sprintHistory` shows earlier proposals in the prompts' history, so an adjustment resends the whole proposal.
+  Tests: `python tests/sprint_proposal_test.py` (`tests/fake-claude.mjs` answers a proposal when the prompt has `FAKESPRINT`).
   Both chat headers show the effective model (`coWriterModel`) and an effort chip (`effortChipHTML`: 5-bar meter; the model's
   default, dashed, when no level is set; none for Haiku), following the same override rules as `runOptionsFor`/`agentEffort`.
 - **Agent Teams** is how the first data of an operation is co-written: an online meetup, Teams style, in a full-screen modal

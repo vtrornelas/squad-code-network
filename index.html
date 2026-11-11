@@ -1124,6 +1124,35 @@ select option,select optgroup{background-color:#0b1215;color:#e3eaed}
 .fe-file button{border:0;background:none;color:#8e8e93;width:18px;height:18px;display:grid;place-items:center;border-radius:50%;cursor:pointer;padding:0}
 .fe-file button:hover{color:var(--im-text);background:#ffffff1a}
 .fe-file button svg{width:11px;height:11px;opacity:1}
+.sp-card{margin:6px 0 2px;max-width:min(100%,460px);border:1px solid #3a3a3c;border-radius:14px;background:#1c1c1e;padding:10px 12px;color:var(--im-text);font-size:12.5px}
+.sp-card.done{border-color:#30d15855}
+.sp-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.sp-tag{font:600 9px var(--mono);letter-spacing:1.2px;text-transform:uppercase;color:var(--im-blue)}
+.sp-head strong{font-size:14px}
+.sp-head em{margin-left:auto;font-style:normal;color:#8e8e93;font-size:11px}
+.sp-goal{margin:6px 0 8px;color:#d1d1d6;line-height:1.45}
+.sp-list{margin:0;padding:0;list-style:none;display:grid;gap:4px;counter-reset:sp}
+.sp-list>li{counter-increment:sp;border-radius:9px;background:#ffffff08}
+.sp-list>li>details>summary{display:flex;align-items:center;gap:8px;padding:7px 9px;cursor:pointer;list-style:none}
+.sp-list>li>details>summary::-webkit-details-marker{display:none}
+.sp-list>li>details>summary::before{content:counter(sp);flex-shrink:0;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;background:#ffffff14;font:600 10px var(--mono);color:#aeaeb2}
+.sp-title{flex:1;min-width:0;font-weight:600;line-height:1.3}
+.sp-badges{display:flex;gap:4px;flex-shrink:0}
+.sp-badges em{font-style:normal;font-size:10px;color:#aeaeb2;border:1px solid #3a3a3c;border-radius:6px;padding:1px 5px;white-space:nowrap}
+.sp-body{padding:2px 10px 9px 35px;font-size:12px;color:#d1d1d6}
+.sp-card .sp-body :is(h1,h2,h3,h4,h5,h6){font-size:10.5px;font-weight:600;margin:9px 0 3px;color:#aeaeb2;text-transform:uppercase;letter-spacing:.6px}
+.sp-card .sp-body :is(p,ul,ol){margin:0 0 4px}
+.sp-card .sp-body li{background:none}
+.sp-deps{margin:6px 0 0;color:#8e8e93;font-size:11px}
+.sp-actions{display:flex;gap:8px;margin-top:10px}
+.sp-actions button{flex:1;border-radius:10px;padding:8px 10px;font:600 12.5px var(--sans);cursor:pointer;border:1px solid transparent}
+.sp-go{background:var(--im-blue);color:#fff}
+.sp-go:hover{filter:brightness(1.1)}
+.sp-only{background:none;border-color:#3a3a3c!important;color:var(--im-text)}
+.sp-only:hover{background:#ffffff0f}
+.sp-hint{display:block;margin-top:7px;color:#8e8e93;font-size:11px}
+.sp-done{display:flex;align-items:center;gap:6px;margin-top:9px;color:#30d158;font-size:12px}
+.sp-done svg{width:15px;height:15px;flex-shrink:0}
 .fe-send svg{width:15px;height:15px;fill:none;stroke:#fff;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
 /* The agent writing into a field block: badge in the header + content revealed line by line. */
 .fe-agent-badge{font:600 8px var(--mono);letter-spacing:1px;color:#fff;background:#0a84ff;border-radius:8px;padding:2px 7px;animation:fe-blink 1s infinite}
@@ -11594,6 +11623,53 @@ function micToggle(){
 }
 function micStop(){if(!speech)return;const r=speech;speech=null;try{r.stop();}catch{}micState();}
 function micState(){$$('[data-action="fe-mic"]').forEach(b=>{b.classList.toggle('on',!!speech);b.setAttribute('aria-pressed',speech?'true':'false');b.title=speech?'Parar o ditado':'Ditar por voz';});}
+/* Sprint proposals (fork vtrornelas): the commander and the PRD (agent chat) and the hosts of Agent Teams can end a reply with a
+   ```json "sprint" block. It becomes m.proposal, shown as a card (sprintCardHTML) whose buttons create the sprint and its features
+   (sprintAccept) and, with "Criar e iniciar", hand the sprint to the commander's planning (startRun({sprintId})).
+   m.proposalDone = {sprintId, started} marks it created; only the newest proposal of a chat keeps the buttons. */
+const SPRINT_MAX_FEATURES=20;
+const SPRINT_SYSTEM=['## Propor uma nova sprint','Quando a pessoa quiser planejar a próxima sprint (por exemplo, porque a anterior terminou) ou concordar com uma que você sugeriu, proponha a sprint inteira de uma vez no bloco ```json do fim da mensagem, na chave "sprint" (ela pode vir junto com "ask" ou com as outras chaves no mesmo bloco):','{"sprint": {"name": "Sprint 02", "goal": "objetivo da sprint em uma ou duas frases", "features": [{"title": "título curto", "context": "por que existe e para quem", "deliverables": ["o que fica pronto"], "criteria": ["critério de aceitação verificável"], "risks": ["risco e como mitigar"], "tasks": ["tarefa"], "scope": "fullstack", "priority": "P1", "dependsOn": ["F03"]}]}}','- scope: fullstack, backend, frontend, architect, po ou qa. priority: P0 (essencial), P1 (importante) ou P2 (incremento). dependsOn: códigos de features que já existem (ex.: F03) ou títulos de outras features desta mesma proposta.','- O SQUAD/CODE mostra a proposta como um cartão com os botões "Criar e iniciar" e "Só criar": a pessoa revisa e aprova ali mesmo, e a sprint e as features são criadas na operação. No texto da mensagem, só resuma a proposta em uma ou duas frases.','- Nunca escreva o plano da sprint no texto da mensagem e nunca peça para a pessoa copiar e colar. Se ela pedir ajustes, mande a proposta inteira de novo, já ajustada.','- Até 12 features por sprint, cada uma pequena o bastante para uma rota de agentes. Use as sprints e features que já existem no contexto (e o status delas) para não repetir trabalho.'].join('\n');
+function sprintFamily(a){return['commander','prd'].includes(chatFamily(a));}
+function sprintNote(a,c){return a&&!ui.opsNew&&!c?.guests?.has(a.id)&&(c?.kind==='doc'||sprintFamily(a))?SPRINT_SYSTEM:'';}
+function sprintProposal(data){
+ const x=data&&typeof data==='object'?data.sprint:null;if(!x||typeof x!=='object'||Array.isArray(x))return null;
+ const str=(v,n)=>(Array.isArray(v)?v.map(i=>String(i??'').trim()).filter(Boolean).join('\n'):typeof v==='string'||typeof v==='number'?String(v):'').trim().slice(0,n);
+ const list=v=>str(v,6000).split('\n').map(l=>l.trim().replace(/^(?:[-*•]|\d+[.)])\s+/,'')).filter(Boolean),bullets=v=>list(v).map(l=>'- '+l).join('\n'),sec=(h,v)=>v?`### ${h}\n${v}`:'';
+ const features=(Array.isArray(x.features)?x.features:[]).filter(f=>f&&typeof f==='object'&&str(f.title??f.titulo,120)).slice(0,SPRINT_MAX_FEATURES).map(f=>{
+  const scope=String(f.scope||'').trim().toLowerCase(),priority=String(f.priority||'').trim().toUpperCase(),deps=f.dependsOn??f.dependencies??f.dependeDe;
+  return{title:str(f.title??f.titulo,120),description:[str(f.description??f.descricao,4000),sec('Contexto',str(f.context??f.contexto,3000)),sec('Entregáveis',bullets(f.deliverables??f.entregaveis)),sec('Riscos',bullets(f.risks??f.riscos))].filter(Boolean).join('\n\n').slice(0,8000),
+   criteria:bullets(f.criteria??f.criterios??f.acceptance).slice(0,8000),tasks:bullets(f.tasks??f.tarefas).slice(0,8000),scope:SCOPES[scope]&&scope!=='setup'?scope:'fullstack',priority:['P0','P1','P2'].includes(priority)?priority:'P1',
+   dependsOn:(Array.isArray(deps)?deps:deps?[deps]:[]).map(d=>String(d).trim()).filter(Boolean).slice(0,10)};
+ });
+ return features.length?{name:str(x.name??x.nome,60),goal:str(x.goal??x.objetivo,2000),features}:null;
+}
+function sprintHistory(m){return m.proposal?`\n[Proposta de sprint enviada${m.proposalDone?' e criada pela pessoa':''}: ${JSON.stringify(m.proposal).slice(0,6000)}]`:'';}
+function sprintCardHTML(m){
+ const x=m.proposal;if(!x)return'';const c=chatNow(),done=m.proposalDone,last=!done&&c?.messages.filter(y=>y.proposal).at(-1)===m,n=x.features.length,id=E(m.id);
+ const status=done?`<div class="sp-done">${icon('check')}<span>${E(sprintById(done.sprintId)?.name||x.name||'Sprint')} criada com ${n} feature${n>1?'s':''}${done.started?' e enviada ao comandante':''}.</span></div>`
+  :last?`<div class="sp-actions"><button type="button" class="sp-go" data-action="sprint-accept" data-id="${id}" data-start="1">Criar e iniciar</button><button type="button" class="sp-only" data-action="sprint-accept" data-id="${id}">Só criar</button></div><small class="sp-hint">Quer ajustar? Escreva o que mudar e a proposta volta atualizada.</small>`
+  :'<small class="sp-hint">Proposta anterior, substituída pela mais nova.</small>';
+ return`<div class="sp-card${done?' done':''}" role="group" aria-label="Proposta de ${E(x.name||'sprint')}"><div class="sp-head"><span class="sp-tag">Proposta de sprint</span><strong>${E(x.name||'Nova sprint')}</strong><em>${n} feature${n>1?'s':''}</em></div>${x.goal?`<p class="sp-goal">${E(x.goal)}</p>`:''}<ol class="sp-list">${x.features.map(f=>`<li><details><summary><span class="sp-title">${E(f.title)}</span><span class="sp-badges"><em>${E(SCOPES[f.scope]||f.scope)}</em><em>${E(f.priority)}</em></span></summary><div class="sp-body fe-bubble-md">${f.description?renderMarkdown(f.description):''}${f.criteria?renderMarkdown('### Critérios de aceitação\n'+f.criteria):''}${f.tasks?renderMarkdown('### Tarefas\n'+f.tasks):''}${f.dependsOn.length?`<p class="sp-deps">Depende de: ${E(f.dependsOn.join(', '))}</p>`:''}</div></details></li>`).join('')}</ol>${status}</div>`;
+}
+function sprintAccept(mid,start){
+ const c=chatNow(),m=c?.messages.find(x=>x.id===mid),x=m?.proposal;if(!x||m.proposalDone)return;
+ if(c.kind==='doc'&&ui.opsNew)return toast('Crie a operação antes: a sprint entra numa operação já registrada.','error');
+ if(!guardMutation())return;const p=project();
+ if(p.sprints.length>=50)return toast('Limite de 50 sprints por projeto.','error');
+ if(p.features.length+x.features.length>150)return toast('Limite de 150 features por projeto.','error');
+ const s=createSprint(p.sprints.length+1,x.name?{name:x.name}:{});s.goal=x.goal;p.sprints.push(s);
+ const setup=setupOf(p),base=setup?[setup.id]:[],made=[];let n=Math.max(0,...p.features.map(f=>parseInt(f.key.replace(/\D/g,''),10)||0));
+ for(const y of x.features){const f=createFeature(y.title,++n,{description:y.description,criteria:y.criteria||'Critérios de aceitação a definir.',tasks:y.tasks,scope:y.scope,priority:y.priority,sprintId:s.id,dependencies:[...base]});p.features.push(f);made.push([f,y]);}
+ for(const [f,y] of made)for(const ref of y.dependsOn){const r=ref.toLowerCase(),d=p.features.find(g=>g.key.toLowerCase()===r)||made.find(([g])=>g.title.toLowerCase()===r)?.[0];if(d&&d.id!==f.id&&!f.dependencies.includes(d.id))f.dependencies.push(d.id);}
+ if(hasCycle(p.features))for(const [f] of made)f.dependencies=[...base];
+ ensureSetup(p);setSprintOpen(s.id,true);log(`${s.name}: criada pela conversa, com ${made.length} feature${made.length>1?'s':''}.`,'plan');
+ m.proposalDone={sprintId:s.id,started:!!start};save();
+ for(const y of c.messages)if(y.proposal)chatRefresh(y);
+ chatPush({role:'system',text:`${s.name} criada com ${made.length} feature${made.length>1?'s':''} (${made.map(([f])=>f.key).join(', ')}).${start?' O comandante vai montar o plano para você aprovar.':' Ela já aparece na operação.'}`});
+ render();if(!start)return toast(`${s.name} criada na operação.`);
+ // Leaving the meetup with unsaved documents saves them first (as "Salvar no projeto"), so nothing written there is lost.
+ setTimeout(()=>{if(chatNow()!==c)return;if(c.kind==='doc'&&teamsDirty())saveProjectDoc($('#docForm'));else closeModal();startRun({sprintId:s.id});},700);
+}
 // Dropping files on a chat attaches them too.
 document.addEventListener('dragover',e=>{if(e.target.closest?.('.fe-compose,#feMsgs')&&e.dataTransfer?.types?.includes('Files'))e.preventDefault();});
 document.addEventListener('drop',e=>{if(e.target.closest?.('.fe-compose,#feMsgs')&&e.dataTransfer?.files?.length){e.preventDefault();attachFiles([...e.dataTransfer.files]);}});
@@ -11684,7 +11760,7 @@ function feFootHTML(m){
 function feMsgHTML(m){
  if(m.role==='system')return`<div class="fe-row system" data-mid="${m.id}"><p class="fe-note${m.error?' error':''}">${E(m.text)}${m.retry?` <button type="button" class="link-button" data-action="fe-retry" data-mid="${m.id}">Tentar de novo</button>`:''}</p></div>`;
  const c=chatNow(),tag=h=>teamsMentionOn(c)?teamsMentionHTML(h,c):h,body=m.role==='agent'?`<div class="fe-bubble-md">${tag(renderMarkdown(m.text))}</div>`:attachChipsHTML(m.files)+tag(E(m.text).replace(/\n/g,'<br>')),who=c?.group&&m.agentId?` data-who="${E(m.agentId)}"`:'';
- return`<div class="fe-row ${m.role}" data-mid="${m.id}"${who}>${feSenderFor(m)}<div class="fe-bubble ${m.role}${m.live?' live':''}">${body}</div>${m.role==='agent'?`<div class="fe-foot">${feFootHTML(m)}</div>${acPickHTML(m)}`:''}</div>`;
+ return`<div class="fe-row ${m.role}" data-mid="${m.id}"${who}>${feSenderFor(m)}<div class="fe-bubble ${m.role}${m.live?' live':''}">${body}</div>${m.role==='agent'?`<div class="fe-foot">${feFootHTML(m)}</div>${sprintCardHTML(m)}${acPickHTML(m)}`:''}</div>`;
 }
 // Group chat (c.group): the agent's portrait and name above the first bubble of each run of its messages.
 function feSenderHTML(a,at){return a?`<span class="fe-sender"><img src="${portrait(a)}" alt="">${E(a.name)}${at&&ui.modal==='teams'?`<time>${feClock(at).split(' ').pop()}</time>`:''}</span>`:'';}
@@ -11748,7 +11824,7 @@ function coWritePrompt(a,msgs){
  const p=project(),f=ui.opsFeatureDraft?.feature,val=id=>(document.getElementById(id)?.value||'').trim(),clip=(t,n)=>t.length>n?t.slice(0,n)+' […]':t,c=ui.featureChat,fresh=new Set(msgs.map(m=>m.id));
  const deps=[...document.querySelectorAll('#featureForm [name=dependencies]:checked')].map(x=>featureById(x.value)?.key).filter(Boolean);
  const others=p.features.filter(x=>x.id!==f?.id).map(x=>`- ${x.key}: ${x.title} (${SCOPES[x.scope]||x.scope}, ${x.priority})`).join('\n');
- const history=[`${a.name}: ${c.greeting||feGreeting(a)}`,...c.messages.filter(m=>!fresh.has(m.id)&&m.role!=='system').slice(-12).map(m=>`${m.role==='user'?'Pessoa':a.name}: ${m.text}`)].join('\n\n');
+ const history=[`${a.name}: ${c.greeting||feGreeting(a)}`,...c.messages.filter(m=>!fresh.has(m.id)&&m.role!=='system').slice(-12).map(m=>`${m.role==='user'?'Pessoa':a.name}: ${m.text}${sprintHistory(m)}`)].join('\n\n');
  return[`# Co-escrita da feature ${f?.key||''} · ${p.code} ${p.name}`,`## Projeto\n${clip(p.briefing||'(sem briefing)',3000)}`,p.scopeIn?.trim()?`Dentro do escopo:\n${clip(p.scopeIn,1500)}`:'',p.scopeOut?.trim()?`Fora do escopo:\n${clip(p.scopeOut,1500)}`:'',others?`## Outras features do projeto\n${others}`:'',
   `## Formulário agora (a pessoa pode ter editado)\nTítulo: ${val('featureTitle')||'(vazio)'}\nÁrea: ${SCOPES[val('featureScope')]||''} · Prioridade: ${val('featurePriority')}${deps.length?` · Depende de: ${deps.join(', ')}`:''}\n\n### Escopo\n${val('featureDescription')||'(vazio)'}\n\n### Critérios de aceitação\n${val('featureCriteria')||'(vazio)'}\n\n### Tarefas\n${val('featureTasks')||'(vazio)'}`,
   history?`## Conversa até aqui\n${history}`:'',`## ${msgs.length>1?'Novas mensagens':'Nova mensagem'} da pessoa\n${msgs.map(m=>m.text).join('\n\n')}`].filter(Boolean).join('\n\n');
@@ -11785,7 +11861,7 @@ async function applyCoWrite(result,cost,meta={}){
 }
 // Shared by both co-writing chats (feature and project document): the bubble settles, then each change lands with its undo value.
 async function chatApply(c,reply,data,changes,cost,meta){
- const ask=chatAsk(data),m=chatSettle(meta.m,{...(meta.agent?{agentId:meta.agent.id}:{}),text:chatAskText(chatClean(reply),ask)||(changes.length?'Pronto, vou atualizar os campos.':'(sem resposta)'),updated:[],prev:null,cost:cost??null,secs:meta.secs||null,editing:changes[0]?.field||null,options:chatAskOptions(ask)});
+ const ask=chatAsk(data),m=chatSettle(meta.m,{...(meta.agent?{agentId:meta.agent.id}:{}),text:chatAskText(chatClean(reply),ask)||(meta.proposal?'Montei a proposta da sprint, dá uma olhada.':changes.length?'Pronto, vou atualizar os campos.':'(sem resposta)'),...(meta.proposal?{proposal:meta.proposal}:{}),updated:[],prev:null,cost:cost??null,secs:meta.secs||null,editing:changes[0]?.field||null,options:chatAskOptions(ask)});
  // In the meetup each field stays on the shared screen long enough to be read before the next one.
  const prev={},gap=c.group&&ui.modal==='teams'?1500:420;
  for(const [i,ch] of changes.entries()){
@@ -11812,7 +11888,7 @@ async function runCoWrite(msgs){
    const turn={i,crew,round};
    try{
     // Chat runs: no tools and no plan mode (its planning flow slowed replies and made the model fake tool calls); text streams live.
-    const started=await bridgeFetch('/api/runs',{method:'POST',body:JSON.stringify({prompt:withFiles(c,doc?docCoWritePrompt(a,c,msgs,turn):coWritePrompt(a,msgs)),systemPrompt:agentSystemPrompt(a)+'\n\n'+[chatReadNote(!(doc&&ui.opsNew)),soulBlock(a,chatGreeting(c,a)),doc?docCoWriteSystem(doc,a,c,turn):COWRITE_SYSTEM].filter(Boolean).join('\n\n'),label:doc?`${a.name} / co-escrita ${doc.title.toLowerCase()}`:`${a.name} / co-escrita ${ui.opsFeatureDraft?.feature.key||''}`,meta:runMeta(doc&&ui.opsNew?null:project(),a,doc?null:ui.opsFeatureDraft?.feature,doc?'doc':'cowrite'),options:{...runOptionsFor(a,runtime(),doc&&ui.opsNew?null:project()),...chatRun(!(doc&&ui.opsNew))}})});
+    const started=await bridgeFetch('/api/runs',{method:'POST',body:JSON.stringify({prompt:withFiles(c,doc?docCoWritePrompt(a,c,msgs,turn):coWritePrompt(a,msgs)),systemPrompt:agentSystemPrompt(a)+'\n\n'+[chatReadNote(!(doc&&ui.opsNew)),doc?sprintNote(a,c):'',soulBlock(a,chatGreeting(c,a)),doc?docCoWriteSystem(doc,a,c,turn):COWRITE_SYSTEM].filter(Boolean).join('\n\n'),label:doc?`${a.name} / co-escrita ${doc.title.toLowerCase()}`:`${a.name} / co-escrita ${ui.opsFeatureDraft?.feature.key||''}`,meta:runMeta(doc&&ui.opsNew?null:project(),a,doc?null:ui.opsFeatureDraft?.feature,doc?'doc':'cowrite'),options:{...runOptionsFor(a,runtime(),doc&&ui.opsNew?null:project()),...chatRun(!(doc&&ui.opsNew))}})});
     if(!mine()){bridgeFetch(`/api/runs/${started.runId}/cancel`,{method:'POST'}).catch(()=>{});return;}
     c.runId=started.runId;c.read=true;chatReceipt();chatTyping(true);
     // The tile goes from "pensando" to "falando" with the first words; a screen still shared by a colleague goes back to the gallery.
@@ -11956,13 +12032,13 @@ function docCoWritePrompt(a,c,msgs,turn){
  // This round's replies go in their own section below, after the person's new messages.
  const round=turn?.round||[],skip=new Set([...msgs.map(m=>m.id),...round.map(r=>r.mid).filter(Boolean)]),who=m=>m.role==='user'?'Pessoa':agentById(m.agentId)?.name||a.name;
  const team=(q?.agentIds||[]).map(agentById).filter(Boolean).map(x=>`- ${x.name}: ${roleLabel(x)}${x.id===a.id?' (você)':c.group?.includes(x.id)?' (na reunião)':''}`).join('\n');
- const feats=ui.opsNew?fv('features').split('\n').map(t=>t.trim()).filter(Boolean).map(t=>`- ${t}`).join('\n'):cur.sprints.map(s=>{const fs=sprintFeatures(s,cur);return fs.length?`### ${s.name}${s.goal?`: ${s.goal}`:''}\n${fs.map(f=>`- ${f.key}: ${f.title} (${SCOPES[f.scope]||f.scope}, ${f.priority})`).join('\n')}`:'';}).filter(Boolean).join('\n');
+ const feats=ui.opsNew?fv('features').split('\n').map(t=>t.trim()).filter(Boolean).map(t=>`- ${t}`).join('\n'):cur.sprints.map(s=>{const fs=sprintFeatures(s,cur);return fs.length?`### ${s.name}${s.goal?`: ${s.goal}`:''}\n${fs.map(f=>`- ${f.key}: ${f.title} (${SCOPES[f.scope]||f.scope}, ${f.priority}, ${STATUS[f.status]||f.status})`).join('\n')}`:'';}).filter(Boolean).join('\n');
  const guests=[...(c.guests||[])].map(([id,g])=>`- ${agentById(id)?.name||id}: chamado por ${g.by}${g.reason?`, para: ${g.reason}`:''}`).join('\n'),called=c.guests?.get(a.id);
  const adrs=def.adrs?adrValues($('#docAdrList')).map((x,i)=>`#### ${num(i)}: ${x.title.trim()||'(sem título)'} (${x.status})\n${acClip(x.content,1200)||'(sem conteúdo)'}`).join('\n\n'):'';
  const now=def.fields.map(f=>`### ${FE_FIELD_LABEL[f.field]}\n${mv(f.id)||'(vazio)'}`).join('\n\n')+(def.adrs?`\n\n### ADRs\n${adrs||'(nenhum registrado)'}`:'');
  const agenda=teamsAgenda().map(x=>`- ${x.label}: ${x.done?'ok':'falta'} (${x.detail})`).join('\n');
  const hellos=(c.group||[c.agentId]).map(id=>[agentById(id)?.name||a.name,chatGreeting(c,agentById(id))]).filter(([,t])=>t).map(([n,t])=>`${n}: ${t}`);
- const history=[...hellos,...c.messages.filter(m=>!skip.has(m.id)&&m.role!=='system').slice(-14).map(m=>`${who(m)}: ${m.text}`)].join('\n\n');
+ const history=[...hellos,...c.messages.filter(m=>!skip.has(m.id)&&m.role!=='system').slice(-14).map(m=>`${who(m)}: ${m.text}${sprintHistory(m)}`)].join('\n\n');
  const tagged=c.group?teamsMentions(c,msgs.map(m=>m.text).join('\n')):[];
  const said=round.map(r=>`${r.agent.name}: ${r.text}${r.updated.length?`\n(atualizou: ${r.updated.map(k=>FE_FIELD_LABEL[k]).join(', ')})`:''}`).join('\n\n');
  return[`# Agent Teams · kickoff de ${cur.code} ${fv('name')||cur.name||'Nova operação'}`,team?`## Squad ${q.name}\n${team}`:'',guests?`## Convidados na reunião\n${guests}`:'',called?`## Por que você está aqui\n${called.by==='Você'?'A pessoa':called.by} chamou você para: ${called.reason||'contribuir com a sua especialidade'}. Responda essa demanda; depois você sai da chamada.`:'',feats?`## Features\n${feats}`:'',`## Pauta\n${agenda}`,
@@ -12095,6 +12171,7 @@ async function applyDocWrite(result,cost,meta={}){
   const pool=teamsPool(c),seen=new Set();
   meta.out.invite=(Array.isArray(data.invite)?data.invite:[data.invite]).map(x=>{const obj=x&&typeof x==='object',name=String(obj?x.agent??x.name??x.codename??'':x).trim().replace(/^@/,'').toUpperCase(),a=pool.find(p=>p.name.toUpperCase()===name);if(!a||seen.has(a.id))return null;seen.add(a.id);return{agent:a,reason:String(obj?x.reason??x.motivo??x.task??'':'').trim().slice(0,200)};}).filter(Boolean).slice(0,2);
  }
+ if(!guest&&!ui.opsNew)meta.proposal=sprintProposal(data);
  return chatApply(c,reply,data,changes,cost,meta);
 }
 function applyDocAdrs(items){
@@ -12254,7 +12331,7 @@ function agentChatPrompt(a,c,msgs,task){
  const team=p.agentIds.map(agentById).filter(Boolean).map(x=>`- ${x.name}: ${roleLabel(x)}${x.id===a.id?' (você)':''}`).join('\n');
  const feats=!p.features.length?'':p.sprints.map(s=>{const fs=sprintFeatures(s,p);return`### ${s.name}${s.goal?`: ${s.goal}`:''}\n${fs.map(f=>`- ${f.key}: ${f.title} (${STATUS[f.status]||f.status}, ${f.priority}${f.route.length?`, rota: ${names(f.route)}`:''})`).join('\n')||'(sem features)'}`;}).join('\n');
  const f=c.focus?.feature?featureById(c.focus.feature):null,adr=c.focus?.adr?(p.adrs||[]).find(x=>x.id===c.focus.adr):null;
- const history=[`${a.name}: ${c.greeting}`,...c.messages.filter(m=>!fresh.has(m.id)&&m.role!=='system').slice(-12).map(m=>`${m.role==='user'?'Pessoa':a.name}: ${m.text}`)].join('\n\n');
+ const history=[`${a.name}: ${c.greeting}`,...c.messages.filter(m=>!fresh.has(m.id)&&m.role!=='system').slice(-12).map(m=>`${m.role==='user'?'Pessoa':a.name}: ${m.text}${sprintHistory(m)}`)].join('\n\n');
  return[`# Conversa com ${a.name} · ${p.code} ${p.name}`,`## Projeto\n${clip(p.briefing,3000)||'(sem briefing)'}`,p.scopeIn?.trim()?`Dentro do escopo:\n${clip(p.scopeIn,1500)}`:'',p.scopeOut?.trim()?`Fora do escopo:\n${clip(p.scopeOut,1500)}`:'',`## Squad ${q?.name||''}\n${team}`,`## Features\n${feats||'(nenhuma ainda)'}`,
   a.role==='architect'&&p.architecture?.trim()?`## Visão de arquitetura\n${clip(p.architecture,2500)}`:'',a.role==='architect'&&(p.adrs||[]).length?`## ADRs\n${p.adrs.map((x,i)=>`- ADR-${String(i+1).padStart(3,'0')}: ${x.title} (${x.status})`).join('\n')}`:'',
   f?`## Feature em foco: ${f.key}, ${f.title}\n${STATUS[f.status]||f.status} · ${f.priority} · ${SCOPES[f.scope]||f.scope}\n\n### Escopo\n${clip(f.description,2500)||'(vazio)'}\n\n### Critérios de aceitação\n${clip(f.criteria,2000)||'(vazio)'}\n\n### Tarefas\n${clip(f.tasks,2000)||'(vazio)'}`:'',
@@ -12266,7 +12343,7 @@ async function runAgentChat(msgs,task){
  const c=chatNow(),a=agentById(c?.agentId);if(c?.kind!=='agent'||!a||!msgs.length)return;
  const token={};c.token=token;c.busy=true;c.started=Date.now();c.read=false;const mine=()=>chatNow()===c&&c.token===token;let live=null;
  try{
-  const started=await bridgeFetch('/api/runs',{method:'POST',body:JSON.stringify({prompt:withFiles(c,agentChatPrompt(a,c,msgs,task)),systemPrompt:agentSystemPrompt(a)+'\n\n'+[soulBlock(a,c.greeting),AGENT_CHAT_SYSTEM,chatReadNote(true)].filter(Boolean).join('\n\n'),label:`${a.name} / conversa`,meta:runMeta(project(),a,null,'chat'),options:{...runOptionsFor(a),...chatRun(true)}})});
+  const started=await bridgeFetch('/api/runs',{method:'POST',body:JSON.stringify({prompt:withFiles(c,agentChatPrompt(a,c,msgs,task)),systemPrompt:agentSystemPrompt(a)+'\n\n'+[soulBlock(a,c.greeting),AGENT_CHAT_SYSTEM,chatReadNote(true),sprintNote(a,c)].filter(Boolean).join('\n\n'),label:`${a.name} / conversa`,meta:runMeta(project(),a,null,'chat'),options:{...runOptionsFor(a),...chatRun(true)}})});
   if(!mine()){bridgeFetch(`/api/runs/${started.runId}/cancel`,{method:'POST'}).catch(()=>{});return;}
   c.runId=started.runId;c.read=true;chatReceipt();chatTyping(true);
   live=chatStream(mine);const exit=await streamRun(started.runId,live.onEvent);
@@ -12274,7 +12351,7 @@ async function runAgentChat(msgs,task){
   const lm=live.stop();c.runId=null;chatTyping(false);const secs=Math.max(1,Math.round((Date.now()-c.started)/1000));
   if(exit.isError){if(lm)chatSettle(lm,{});chatPush(exit.status==='cancelled'?{role:'system',text:'Resposta interrompida.'}:{role:'system',text:`Não consegui responder: ${exit.error||'falha na execução do Claude Code.'}`,error:true,retry:msgs.map(x=>x.id),task:task||null});}
   // A ```json block is only taken out of the reply when it carries an "ask" (a technical answer may show JSON on purpose).
-  else{const raw=exit.result||'',{reply,data}=parseCoWrite(raw),ask=chatAsk(data);chatSettle(lm,{text:chatAskText(chatClean(ask?reply:raw),ask)||'(sem resposta)',cost:exit.costUsd??null,secs,options:[...chatAskOptions(ask),AC_MENU]});}
+  else{const raw=exit.result||'',{reply,data}=parseCoWrite(raw),ask=chatAsk(data),proposal=sprintFamily(a)?sprintProposal(data):null;chatSettle(lm,{text:chatAskText(chatClean(ask||proposal?reply:raw),ask)||(proposal?'Montei a proposta da sprint, dá uma olhada.':'(sem resposta)'),cost:exit.costUsd??null,secs,options:[...chatAskOptions(ask),AC_MENU],...(proposal?{proposal}:{})});}
  }catch(error){if(mine()){const lm=live?.stop();if(lm)chatSettle(lm,{});chatTyping(false);chatPush({role:'system',text:`Não consegui responder: ${error.message}`,error:true,retry:msgs.map(x=>x.id),task:task||null});}}
  finally{if(mine()){c.busy=false;c.runId=null;chatTyping(false);if(c.queue.length)runAgentChat(c.queue.splice(0));}}
 }
@@ -13553,7 +13630,7 @@ document.addEventListener('click',event=>{
   case 'portrait-pick':if(ui.draft?.kind==='agent'){ui.draft.agent.image=PORTRAITS[control.dataset.preset]||'';refreshPortraitPicker();closeLookPicker();}break;
   
   case 'prompt-reset':if(ui.draft?.kind==='agent')$('#agentPrompt').value=ROLES[$('#agentRole').value].prompt;break;
-  case 'projects':openProjects();break;case 'squad-select':selectSquad(agentId);break;case 'squad-open':openSquadStudio(agentId);break;case 'squad-new':newSquad();break;case 'squad-cancel-new':ui.squadDraft=null;ui.squadPick=null;ui.opPending=null;render();break;case 'squad-discard':ui.squadDraft=null;ui.squadPick=null;render();break;case 'squad-delete':deleteSquad(agentId);break;case 'project-export':exportProject(agentId);break;case 'fe-attach':$('#feAttachInput')?.click();break;case 'fe-attach-remove':attachRemove(agentId);break;case 'fe-mic':micToggle();break;case 'fe-send':if(chatNow()?.kind==='agent')sendAgentChat();else sendFeatureChat();break;case 'fe-quick':sendFeatureChat(control.dataset.text);break;case 'fe-stop':{const k=chatNow()?.kind;if(k==='agent')agentChatStop();else if(k==='doc')docChatStop();else featureChatStop();break;}case 'agent-teams':event.preventDefault();openAgentTeams();break;case 'teams-mention':teamsMentionInsert(control.dataset.name);break;case 'teams-mention-pick':teamsMentionPick(control.dataset.name);break;case 'teams-tab':teamsTab(control.dataset.tab);break;case 'teams-agenda':teamsAgendaOpen(control.dataset.field);break;case 'teams-unshare':if(ui.docChat){ui.docChat.sharing=null;teamsSync();}break;case 'teams-leave':teamsLeave();break;case 'teams-leave-now':closeModal();break;case 'teams-stay':{const b=$('#atConfirm');if(b)b.hidden=true;$('#feChatInput')?.focus();break;}case 'teams-save-leave':$('#docForm')?.requestSubmit();break;case 'fe-undo':undoCoWrite(control.dataset.mid);break;case 'fe-jump':feScroll($('#feMsgs'),true);break;case 'fe-retry':retryCoWrite(control.dataset.mid);break;case 'ac-opt':agentChatChoose(control.dataset.mid,control.dataset.opt,control.dataset.arg||'');break;case 'fe-field':{if(ui.modal==='teams')teamsTab('docs');const el=document.getElementById(FE_FIELD_ID[control.dataset.field]),t=el?.closest('.fe-md')||el;if(t){t.classList.remove('collapsed');t.scrollIntoView({block:'nearest',behavior:'smooth'});t.classList.remove('fe-updated');void t.offsetWidth;t.classList.add('fe-updated');setTimeout(()=>t.classList.remove('fe-updated'),1400);}break;}case 'fe-collapse':{const sec=control.closest('.fe-md'),closed=sec.classList.toggle('collapsed');control.setAttribute('aria-expanded',String(!closed));break;}case 'fe-md-mode':feMdMode(control.closest('.fe-md'),control.dataset.mode);break;case 'fe-md-open':feMdMode(control.closest('.fe-md'),'edit');break;case 'fe-md-tool':feMdTool(control.closest('.fe-md')?.querySelector('.fe-area'),control.dataset.tool);break;case 'adr-add':{const list=control.closest('form')?.querySelector('.adr-list')||$('#adrList');if(list){list.insertAdjacentHTML('beforeend',adrBlockHTML({id:id('adr'),title:'',status:'Proposto',content:ADR_SKELETON},list.children.length));renumberAdrs(list);list.lastElementChild.querySelector('[name=adrTitle]').focus();}teamsSync();break;}case 'adr-remove':{const list=control.closest('.adr-list');control.closest('.adr-block')?.remove();renumberAdrs(list);teamsSync();break;}case 'sq-pick':openPick(control.dataset.slot,control.dataset.index);break;case 'sq-move':moveCursor(Number(control.dataset.dir)||1);break;case 'sq-cursor':clickPickItem(Number(control.dataset.i)||0);break;case 'sq-confirm':confirmPick();break;case 'sq-remove':removeOperator();break;case 'sq-more':pickMore();break;case 'sq-back':pickBack();break;case 'sq-node-view':state.settings.squadNodes=control.dataset.view==='photo'?'photo':'icon';save();render();break;case 'sq-close':ui.squadPick=null;render();break;case 'ops-feature-close':ui.opsFeature=null;ui.opsFeatureDraft=null;render();break;case 'ops-feat-view':ui.opsFeatView=control.dataset.view==='board'?'board':'list';render();break;case 'ops-plan-discard':ui.opsPlan=null;render();break;case 'ops-select':ui.opsFeature=null;ui.opsFeatureDraft=null;ui.opsPlan=null;switchProject(agentId,true);break;case 'ops-cancel-new':ui.opsNew=null;render();break;case 'ops-open-squad':goView('network');MapNetwork.home();break;case 'project-new':openProjectEditor();break;case 'op-new-existing':opNewPickStep();break;case 'op-new-squad':opNewNewSquad();break;case 'op-new-back':openOpNew(ui.opNew?.name);break;case 'op-new-back-squad':opNewSquadStep();break;case 'project-edit':openProjectEditor(agentId);break;case 'project-switch':switchProject(agentId);break;case 'project-delete':deleteProject(agentId);break;case 'briefing':openBriefing();break;
+  case 'projects':openProjects();break;case 'squad-select':selectSquad(agentId);break;case 'squad-open':openSquadStudio(agentId);break;case 'squad-new':newSquad();break;case 'squad-cancel-new':ui.squadDraft=null;ui.squadPick=null;ui.opPending=null;render();break;case 'squad-discard':ui.squadDraft=null;ui.squadPick=null;render();break;case 'squad-delete':deleteSquad(agentId);break;case 'project-export':exportProject(agentId);break;case 'fe-attach':$('#feAttachInput')?.click();break;case 'sprint-accept':sprintAccept(agentId,control.dataset.start==='1');break;case 'fe-attach-remove':attachRemove(agentId);break;case 'fe-mic':micToggle();break;case 'fe-send':if(chatNow()?.kind==='agent')sendAgentChat();else sendFeatureChat();break;case 'fe-quick':sendFeatureChat(control.dataset.text);break;case 'fe-stop':{const k=chatNow()?.kind;if(k==='agent')agentChatStop();else if(k==='doc')docChatStop();else featureChatStop();break;}case 'agent-teams':event.preventDefault();openAgentTeams();break;case 'teams-mention':teamsMentionInsert(control.dataset.name);break;case 'teams-mention-pick':teamsMentionPick(control.dataset.name);break;case 'teams-tab':teamsTab(control.dataset.tab);break;case 'teams-agenda':teamsAgendaOpen(control.dataset.field);break;case 'teams-unshare':if(ui.docChat){ui.docChat.sharing=null;teamsSync();}break;case 'teams-leave':teamsLeave();break;case 'teams-leave-now':closeModal();break;case 'teams-stay':{const b=$('#atConfirm');if(b)b.hidden=true;$('#feChatInput')?.focus();break;}case 'teams-save-leave':$('#docForm')?.requestSubmit();break;case 'fe-undo':undoCoWrite(control.dataset.mid);break;case 'fe-jump':feScroll($('#feMsgs'),true);break;case 'fe-retry':retryCoWrite(control.dataset.mid);break;case 'ac-opt':agentChatChoose(control.dataset.mid,control.dataset.opt,control.dataset.arg||'');break;case 'fe-field':{if(ui.modal==='teams')teamsTab('docs');const el=document.getElementById(FE_FIELD_ID[control.dataset.field]),t=el?.closest('.fe-md')||el;if(t){t.classList.remove('collapsed');t.scrollIntoView({block:'nearest',behavior:'smooth'});t.classList.remove('fe-updated');void t.offsetWidth;t.classList.add('fe-updated');setTimeout(()=>t.classList.remove('fe-updated'),1400);}break;}case 'fe-collapse':{const sec=control.closest('.fe-md'),closed=sec.classList.toggle('collapsed');control.setAttribute('aria-expanded',String(!closed));break;}case 'fe-md-mode':feMdMode(control.closest('.fe-md'),control.dataset.mode);break;case 'fe-md-open':feMdMode(control.closest('.fe-md'),'edit');break;case 'fe-md-tool':feMdTool(control.closest('.fe-md')?.querySelector('.fe-area'),control.dataset.tool);break;case 'adr-add':{const list=control.closest('form')?.querySelector('.adr-list')||$('#adrList');if(list){list.insertAdjacentHTML('beforeend',adrBlockHTML({id:id('adr'),title:'',status:'Proposto',content:ADR_SKELETON},list.children.length));renumberAdrs(list);list.lastElementChild.querySelector('[name=adrTitle]').focus();}teamsSync();break;}case 'adr-remove':{const list=control.closest('.adr-list');control.closest('.adr-block')?.remove();renumberAdrs(list);teamsSync();break;}case 'sq-pick':openPick(control.dataset.slot,control.dataset.index);break;case 'sq-move':moveCursor(Number(control.dataset.dir)||1);break;case 'sq-cursor':clickPickItem(Number(control.dataset.i)||0);break;case 'sq-confirm':confirmPick();break;case 'sq-remove':removeOperator();break;case 'sq-more':pickMore();break;case 'sq-back':pickBack();break;case 'sq-node-view':state.settings.squadNodes=control.dataset.view==='photo'?'photo':'icon';save();render();break;case 'sq-close':ui.squadPick=null;render();break;case 'ops-feature-close':ui.opsFeature=null;ui.opsFeatureDraft=null;render();break;case 'ops-feat-view':ui.opsFeatView=control.dataset.view==='board'?'board':'list';render();break;case 'ops-plan-discard':ui.opsPlan=null;render();break;case 'ops-select':ui.opsFeature=null;ui.opsFeatureDraft=null;ui.opsPlan=null;switchProject(agentId,true);break;case 'ops-cancel-new':ui.opsNew=null;render();break;case 'ops-open-squad':goView('network');MapNetwork.home();break;case 'project-new':openProjectEditor();break;case 'op-new-existing':opNewPickStep();break;case 'op-new-squad':opNewNewSquad();break;case 'op-new-back':openOpNew(ui.opNew?.name);break;case 'op-new-back-squad':opNewSquadStep();break;case 'project-edit':openProjectEditor(agentId);break;case 'project-switch':switchProject(agentId);break;case 'project-delete':deleteProject(agentId);break;case 'briefing':openBriefing();break;
   case 'features':openFeatures();break;case 'feature-new':openFeatureEditor(null,control.dataset.sprint);break;case 'feature-run':startRun({featureId:agentId});break;case 'sprint-run':startRun({sprintId:agentId});break;case 'sprint-new':openSprintEditor();break;case 'sprint-edit':openSprintEditor(agentId);break;case 'sprint-delete':deleteSprint(agentId);break;case 'sprint-toggle':{const s=sprintById(agentId);if(s){const open=control.getAttribute('aria-expanded')==='true';setSprintOpen(s.id,!open);render();}break;}case 'feature-open':openFeature(agentId);break;case 'feature-delete':deleteFeature(agentId);break;
   case 'feature-approve':approveFeature(agentId,true);break;case 'feature-rework':approveFeature(agentId,false);break;
   case 'distribute':openDistribution();break;case 'plan-apply':applyPlan(control.dataset.run==='1');break;

@@ -150,7 +150,7 @@ try:
         page.fill('#feChatInput', 'Segue a versão nova da spec')
         page.click('[data-action="fe-mic"]')
         page.wait_for_timeout(500)
-        test('Gravando, o microfone fica vermelho', page.evaluate('getComputedStyle(document.querySelector("[data-action=fe-mic]")).backgroundColor') == 'rgb(214, 69, 61)')
+        test('Gravando, o microfone fica vermelho', page.evaluate('getComputedStyle(document.querySelector("[data-action=fe-mic]")).backgroundColor').replace('rgba', 'rgb').replace(', 1)', ')') == 'rgb(214, 69, 61)')  # Chrome may report rgba(..., 1) right after the transition
         page.screenshot(path=os.environ.get('SQUAD_PREVIEW', str(tmp / 'chat-extras.png')), clip={'x': 0, 'y': 0, 'width': 1500, 'height': 950})
         page.click('[data-action="fe-mic"]')
 
