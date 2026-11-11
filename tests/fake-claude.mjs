@@ -35,5 +35,9 @@ process.stdin.on('end', () => {
   emit({ type: 'assistant', message: { content: [{ type: 'tool_use', id: 't1', name: 'Read', input: { file_path: 'README.md' } }] } });
   if (args.includes('--include-partial-messages')) for (const text of ['wor', 'king']) emit({ type: 'stream_event', event: { type: 'content_block_delta', index: 0, delta: { type: 'text_delta', text } } });
   emit({ type: 'assistant', message: { content: [{ type: 'text', text: 'working' }] } });
-  emit({ type: 'result', subtype: 'success', is_error: false, result: `ECHO:${input.trim()}|SYS:${system.trim()}`, total_cost_usd: 0.001, duration_ms: 12, num_turns: 1, session_id: 'fake-session' });
+  // FAKESPRINT: a chat reply that proposes a sprint (the ```json "sprint" block of the chats), for the UI tests.
+  const sprintReply = 'Montei a Sprint 02 com duas features.\n```json\n' + JSON.stringify({ sprint: { name: 'Sprint 02', goal: 'Resultado em stories, uma métrica por tela.', features: [
+    { title: 'Telas de stories', context: 'Quem gera o painel quer postar.', deliverables: ['Uma tela por métrica'], criteria: ['Passa de tela com um toque', 'Funciona no celular'], risks: ['Telas lentas no Android antigo'], tasks: ['Componente de tela', 'Navegação por toque'], scope: 'frontend', priority: 'P0', dependsOn: ['F01'] },
+    { title: 'Card por tela', criteria: ['Cada tela vira um card 1080x1920'], scope: 'frontend', priority: 'P1', dependsOn: ['Telas de stories'] }] } }) + '\n```';
+  emit({ type: 'result', subtype: 'success', is_error: false, result: input.includes('FAKESPRINT') ? sprintReply : `ECHO:${input.trim()}|SYS:${system.trim()}`, total_cost_usd: 0.001, duration_ms: 12, num_turns: 1, session_id: 'fake-session' });
 });
