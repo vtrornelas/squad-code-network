@@ -1140,6 +1140,9 @@ select option,select optgroup{background-color:#0b1215;color:#e3eaed}
 .sp-hint{display:block;margin-top:7px;color:#8e8e93;font-size:11px}
 .sp-done{display:flex;align-items:center;gap:6px;margin-top:9px;color:#30d158;font-size:12px}
 .sp-done svg{width:15px;height:15px;flex-shrink:0}
+.fp-card .sp-title b{font-family:var(--mono);font-size:11px;color:var(--im-blue);margin-right:4px}
+.fp-new{font:600 9px var(--mono);letter-spacing:.8px;text-transform:uppercase;color:#30d158;border:1px solid #30d15866;border-radius:5px;padding:1px 4px;margin-right:4px;vertical-align:1px}
+.fp-warn{color:#ff9f0a;font-weight:400}
 .fe-send svg{width:15px;height:15px;fill:none;stroke:#fff;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
 /* The agent writing into a field block: badge in the header + content revealed line by line. */
 .fe-agent-badge{font:600 8px var(--mono);letter-spacing:1px;color:#fff;background:#0a84ff;border-radius:8px;padding:2px 7px;animation:fe-blink 1s infinite}

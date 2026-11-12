@@ -39,5 +39,11 @@ process.stdin.on('end', () => {
   const sprintReply = 'Montei a Sprint 02 com duas features.\n```json\n' + JSON.stringify({ sprint: { name: 'Sprint 02', goal: 'Resultado em stories, uma métrica por tela.', features: [
     { title: 'Telas de stories', context: 'Quem gera o painel quer postar.', deliverables: ['Uma tela por métrica'], criteria: ['Passa de tela com um toque', 'Funciona no celular'], risks: ['Telas lentas no Android antigo'], tasks: ['Componente de tela', 'Navegação por toque'], scope: 'frontend', priority: 'P0', dependsOn: ['F01'] },
     { title: 'Card por tela', criteria: ['Cada tela vira um card 1080x1920'], scope: 'frontend', priority: 'P1', dependsOn: ['Telas de stories'] }] } }) + '\n```';
-  emit({ type: 'result', subtype: 'success', is_error: false, result: input.includes('FAKESPRINT') ? sprintReply : `ECHO:${input.trim()}|SYS:${system.trim()}`, total_cost_usd: 0.001, duration_ms: 12, num_turns: 1, session_id: 'fake-session' });
+  // FAKEFEATS:<key>: a reply that changes feature <key> and adds one to "Sprint 01" (the "features" list of the chats).
+  const featKey = (input.match(/FAKEFEATS:(F\d+)/) || [])[1];
+  const featsReply = 'Ajustei os critérios e coloquei o KEYMASTER como revisor.\n```json\n' + JSON.stringify({ features: [
+    { key: featKey, criteria: ['Recusa arquivo acima de 100 MB', 'O worker responde com connect-src none'], risks: ['O tamanho declarado no zip pode mentir'], agents: ['KEYMASTER', 'SENTINEL'], priority: 'P0' },
+    { sprint: 'Sprint 01', title: 'Teste com arquivo hostil', context: 'Garantir que nada sai do navegador.', criteria: ['Nenhum elemento criado pelo arquivo'], scope: 'qa', dependsOn: [featKey] },
+    { key: 'F99', criteria: ['não existe'] }] }) + '\n```';
+  emit({ type: 'result', subtype: 'success', is_error: false, result: featKey ? featsReply : input.includes('FAKESPRINT') ? sprintReply : `ECHO:${input.trim()}|SYS:${system.trim()}`, total_cost_usd: 0.001, duration_ms: 12, num_turns: 1, session_id: 'fake-session' });
 });
