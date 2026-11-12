@@ -172,7 +172,14 @@ report (framed as "[Subagent hand-back] ... The report follows:" with indented l
   `m.proposalDone={sprintId, started}` and, with "Criar e iniciar", closes the chat (the meetup saves unsaved documents first through
   `saveProjectDoc`) and calls `startRun({sprintId})`, so the commander plans it and the plan card still waits for approval.
   `sprintHistory` shows earlier proposals in the prompts' history, so an adjustment resends the whole proposal.
-  Tests: `python tests/sprint_proposal_test.py` (`tests/fake-claude.mjs` answers a proposal when the prompt has `FAKESPRINT`).
+  Feature changes (this fork): the same voices also get `FEATURES_SYSTEM` (in `sprintNote`), a ```json `"features":[...]` list.
+  `featureChanges` → `m.featPlan` (items `{key, fields, sprint}`; `featureFields` keeps only the fields sent, `descParts` for
+  description/context/deliverables/risks/agents), drawn by `featPlanCardHTML` and applied by `featPlanApply` (`feat-apply`): an item
+  with `key` updates that feature (not done ones; `composeDescription` replaces only the `### ` sections sent, "Quem participa"
+  first), `sprint` moves it, `dependsOn` replaces its dependencies (setup kept, previous ones back on a cycle); an item without `key`
+  is a new feature in the named sprint or `currentSprint`. "Aplicar e iniciar <sprint>" shows when everything lands in one sprint.
+  Tests: `python tests/sprint_proposal_test.py` (`tests/fake-claude.mjs` answers a proposal when the prompt has `FAKESPRINT`, and
+  feature changes for `FAKEFEATS:<key>`).
   Both chat headers show the effective model (`coWriterModel`) and an effort chip (`effortChipHTML`: 5-bar meter; the model's
   default, dashed, when no level is set; none for Haiku), following the same override rules as `runOptionsFor`/`agentEffort`.
 - **Agent Teams** is how the first data of an operation is co-written: an online meetup, Teams style, in a full-screen modal

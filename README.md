@@ -20,6 +20,8 @@ Tudo roda na sua máquina: um app de página única servido por um bridge local 
 >
 > - **Sprints pela conversa**: no Agent Teams ou na conversa com o comandante (ou o PO), quando vocês decidem a próxima sprint, a proposta chega como um cartão com as features (contexto, entregáveis, critérios de aceitação, riscos e tarefas). **Criar e iniciar** cria a sprint e as features na operação e entrega ao comandante, que monta o plano para você aprovar; **Só criar** só registra. Para ajustar, é só escrever o que mudar: a proposta volta atualizada.
 >
+> - **Alterar features pela conversa**: quando a conversa muda uma feature que já existe (critérios, riscos, tarefas, prioridade, sprint, quem participa) ou acrescenta features a uma sprint, as mudanças chegam num cartão com **Aplicar** (e **Aplicar e iniciar**, quando tudo cai numa sprint só).
+>
 > Para trazer as novidades do projeto original: `git fetch upstream` e `git merge upstream/main`.
 
 ---

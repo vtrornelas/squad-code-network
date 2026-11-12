@@ -137,6 +137,30 @@ try:
         test('E entrega a sprint ao comandante', page.evaluate('!!runner && runner.sprintId===project().sprints.at(-1).id'))
         page.evaluate('stopRun()')
 
+        # 6. Changes to existing features (and new ones in an existing sprint) come as a card with "Aplicar".
+        page.evaluate('closeModal()'); page.wait_for_timeout(500)
+        key = page.evaluate('project().features.find(f=>!f.setup&&f.status!=="done"&&sprintOf(f,project())===project().sprints[0])?.key')
+        assert key, 'o exemplo precisa de uma feature não concluída na primeira sprint'
+        before = page.evaluate(f'(()=>{{const f=project().features.find(x=>x.key==="{key}");return{{description:f.description,title:f.title,count:project().features.length}}}})()')
+        page.evaluate(f'openAgentChat("{cmd}")'); page.wait_for_selector('#feChatInput')
+        run = send_and_wait(page, f'FAKEFEATS:{key} ajusta a feature')
+        test('O comandante recebe as instruções para alterar features', 'Alterar ou acrescentar features' in run['systemPrompt'])
+        test('As alterações aparecem como cartão', page.locator('#feMsgs .fp-card').count() == 1)
+        card = page.inner_text('#feMsgs .fp-card')
+        test('O cartão lista a feature alterada, a nova e a que não existe', key in card and 'Teste com arquivo hostil' in card and 'F99' in card)
+        test('O cartão tem o botão Aplicar', page.locator('.fp-card [data-action="feat-apply"]').count() >= 1)
+        page.click('.fp-card [data-action="feat-apply"]:not([data-start])')
+        page.wait_for_function(f'project().features.length === {before["count"] + 1}', timeout=5000)
+        f = page.evaluate(f'(()=>{{const p=project(),f=p.features.find(x=>x.key==="{key}");return{{title:f.title,criteria:f.criteria,description:f.description,priority:f.priority}}}})()')
+        test('Os critérios da feature são substituídos', f['criteria'] == '- Recusa arquivo acima de 100 MB\n- O worker responde com connect-src none')
+        test('A prioridade muda', f['priority'] == 'P0')
+        test('O título, que não veio na alteração, fica igual', f['title'] == before['title'])
+        test('Riscos e participantes entram na descrição sem apagar o resto', '### Riscos' in f['description'] and 'KEYMASTER, SENTINEL' in f['description'] and (before['description'].split('### ')[0].strip() in f['description']))
+        new = page.evaluate('(()=>{const p=project(),f=p.features.at(-1);return{title:f.title,sprint:sprintOf(f,p).name,scope:f.scope,deps:f.dependencies.map(d=>featureById(d)?.key)}})()')
+        test('A feature nova entra na sprint indicada, dependendo da alterada', new['title'] == 'Teste com arquivo hostil' and new['sprint'] == page.evaluate('project().sprints[0].name') and new['scope'] == 'qa' and key in new['deps'])
+        test('O chat avisa o que foi aplicado e o que ficou de fora', key in page.locator('#feMsgs .fe-row.system').last.inner_text() and 'F99' in page.locator('#feMsgs .fe-row.system').last.inner_text())
+        test('Depois de aplicar, o cartão sai dos botões', page.locator('.fp-card [data-action="feat-apply"]').count() == 0)
+
         test('Nenhum erro de JavaScript na página', not errors)
         browser.close()
 finally:
